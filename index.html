@@ -897,7 +897,11 @@ async function render() {
   animaNumeros();
   document.querySelectorAll('#nav a').forEach(a => { const k = a.getAttribute('href').slice(1).split('-')[0]; a.toggleAttribute('aria-current', k === navKey); if (k === navKey) a.setAttribute('aria-current', 'page'); });
 }
-window.addEventListener('hashchange', () => { render().then(() => window.scrollTo(0, 0)); });
+// medição de visitas: o Umami ignora o "#", então cada troca de tela do app é avisada a ele à mão (sem Umami na página, não faz nada)
+function medeTela() {
+  try { if (window.umami && typeof umami.track === 'function') umami.track(p => ({ ...p, url: location.pathname + location.hash, title: document.title })); } catch (e) { /* medição nunca pode quebrar o site */ }
+}
+window.addEventListener('hashchange', () => { render().then(() => window.scrollTo(0, 0)); medeTela(); });
 
 // dica flutuante para qualquer elemento com data-tip (pontos dos gráficos); no toque, aparece ao tocar
 const tipEl = Object.assign(document.createElement('div'), { id: 'tip', hidden: true }); document.body.appendChild(tipEl);
