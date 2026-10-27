@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://almanaquenovaera.com.br/sitemap.xml
