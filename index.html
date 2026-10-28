@@ -120,6 +120,18 @@ p { margin: 0; max-width: 68ch; }
 .hero .stars { color: var(--amarelo); font-size: 18px; letter-spacing: 3px; }
 .note { font-size: 14px; color: var(--muted); }
 /* align-items: start: cada coluna começa no topo; sem isso a coluna curta estica até a altura da longa e espalha o conteúdo */
+.cam-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr)); gap: 14px; }
+.cam-card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; box-shadow: var(--shadow); }
+.cam-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.cam-top .note { font-variant-numeric: tabular-nums; }
+.cam-nums { display: flex; gap: 18px; font-size: 14px; color: var(--muted); }
+.cam-nums b { font: 700 22px/1 var(--display); color: var(--ink); margin-right: 4px; font-variant-numeric: tabular-nums; }
+.cam-nums span:empty { display: none; }
+.cam-camisas { display: flex; flex-wrap: wrap; gap: 8px; border-top: 1px solid var(--line); padding-top: 12px; }
+.cam-camisa { display: flex; flex-direction: column; align-items: center; min-width: 58px; padding: 6px 10px; border-radius: 8px; background: var(--field-soft); }
+.cam-camisa b { font: 700 24px/1 var(--display); color: var(--ink); }
+.cam-camisa span { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; margin-top: 3px; }
+.cam-camisa.main { background: var(--gold-soft); }
 .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 36px 32px; align-items: start; }
 .grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 28px 28px; align-items: start; }
 td.periodo { white-space: normal; line-height: 1.25; }
@@ -738,7 +750,10 @@ async function vJogador(slug) {
   const blocos = Object.keys(porAno).sort((a, b) => b - a).map((a, i) => `<details class="temp-gols"${i === 0 ? ' open' : ''}><summary><b>${a}</b> <span class="note">${porAno[a].length} gol${porAno[a].length > 1 ? 's' : ''} · ${[...new Set(porAno[a].map(g => nome(g.clube)))].join(', ')}</span></summary>
     <div class="tbl-wrap"><table class="compacta"><thead><tr><th class="l">Data</th><th class="l">Jogo</th><th>Min.</th></tr></thead><tbody>${porAno[a].map(g => `<tr>${linhaJogo(g.p, g.clube, `<td>${esc(g.min)}'${g.tipo === 'p' ? ' <span class="note" title="Pênalti">(pên.)</span>' : ''}</td>`)}</tr>`).join('')}</tbody></table></div></details>`).join('');
   const hats = j.maisGols.filter(g => g.gols >= 3).length;
-  const camisasSec = esp && esp.clubes.length ? sec('Camisas e assistências', `<div class="tbl-wrap"><table><thead><tr><th class="l">Clube</th><th>Jogos</th><th>Assist.</th><th class="l">Camisa (jogos)</th></tr></thead><tbody>${esp.clubes.map(c => `<tr><td class="l">${team(c.slug)}<div class="note">${c.de === c.ate ? c.de : c.de + '–' + c.ate}</div></td><td>${c.jogos}</td><td>${c.assist}</td><td class="l quebra">${c.camisas.length ? c.camisas.map(m => `<b>${m.n}</b> (${m.jogos})`).join(' · ') : '–'}</td></tr>`).join('')}</tbody></table></div>`, '',
+  const camisasSec = esp && esp.clubes.length ? sec('Camisas e assistências', `<div class="cam-grid">${esp.clubes.map(c => `<div class="cam-card">
+      <div class="cam-top">${team(c.slug)}<span class="note">${c.de === c.ate ? c.de : c.de + '–' + c.ate}</span></div>
+      <div class="cam-nums"><span><b>${c.jogos}</b>jogos</span><span><b>${c.assist}</b>assist.</span></div>
+      ${c.camisas.length ? `<div class="cam-camisas">${c.camisas.map((m, i) => `<div class="cam-camisa${i === 0 ? ' main' : ''}" title="Camisa ${m.n}: ${m.jogos} jogo${m.jogos > 1 ? 's' : ''}"><b>${m.n}</b><span>${m.jogos} jogo${m.jogos > 1 ? 's' : ''}</span></div>`).join('')}</div>` : ''}</div>`).join('')}</div>`, '',
     `Jogos em que entrou em campo, de 2014 em diante, segundo a ESPN. Assistências são as que a ESPN registrou. Veja o <a href="#artilheiros" onclick="artTab='assist'">ranking de assistências</a>.`) : '';
   return `<div class="hero"><span class="eyebrow">Jogador · ${pos}º na artilharia geral</span><h1>${esc(j.atleta)}</h1>
     <p class="lede">${j.gols} gols na Nova Era, entre ${de} e ${ate}, por ${j.porClube.length} clube${j.porClube.length > 1 ? 's' : ''}. Melhor temporada: ${melhor.ano}, com ${melhor.gols} gols.</p>
