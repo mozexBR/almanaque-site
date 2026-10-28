@@ -148,6 +148,17 @@ tr.campeao { background: color-mix(in srgb, var(--gold-soft) 70%, transparent); 
 tbody tr:hover { background: var(--field-soft); }
 .pos { color: var(--muted); width: 1%; }
 
+/* cabeçalho fixo: ao descer a página, os títulos das colunas (Pts, V, E, D…) grudam logo abaixo da barra do topo.
+   Tabela que cabe na tela: o próprio th fica "sticky" (o contêiner deixa de rolar). Tabela larga, que rola para o lado:
+   o JS monta uma cópia do cabeçalho (.cab-flut) presa à tela e sincronizada com a rolagem lateral. */
+:root { --topbar-h: 64px; }
+.tbl-wrap.cabfixo { overflow: visible; }
+.tbl-wrap.cabfixo th { top: calc(var(--topbar-h) + env(safe-area-inset-top, 0px)); z-index: 3; box-shadow: inset 0 -1px var(--line); }
+.cab-flut { position: fixed; z-index: 4; overflow: hidden; background: var(--bg); box-shadow: 0 1px var(--line); }
+.cab-flut[hidden] { display: none; }
+.cab-flut table { width: auto; table-layout: fixed; }
+.cab-flut th { top: 0; box-shadow: inset 0 -1px var(--line); }
+
 .team { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; font-weight: 500; }
 .team:hover span.n { text-decoration: underline; }
 .crest { --c1: #777; --c2: #fff; --c3: #777; display: inline-grid; place-items: center; width: 26px; height: 26px; flex: none; border-radius: 50%;
@@ -895,8 +906,58 @@ async function render() {
   app.innerHTML = `<div class="view">${html}</div>`;
   if (bind) bind();
   animaNumeros();
+  montaCabecalhos();
   document.querySelectorAll('#nav a').forEach(a => { const k = a.getAttribute('href').slice(1).split('-')[0]; a.toggleAttribute('aria-current', k === navKey); if (k === navKey) a.setAttribute('aria-current', 'page'); });
 }
+/* ---------- cabeçalho fixo das tabelas longas (ver CSS "cabeçalho fixo") ---------- */
+const MIN_LINHAS_CAB = 10; // tabelas curtas não precisam de cabeçalho fixo
+let cabFlut = [];
+function topoFixo() { const t = document.querySelector('.topbar'); return t ? t.getBoundingClientRect().bottom : 0; }
+function montaCabecalhos() {
+  const topbar = document.querySelector('.topbar');
+  if (topbar) document.documentElement.style.setProperty('--topbar-h', topbar.offsetHeight + 'px');
+  cabFlut = [];
+  document.querySelectorAll('.cab-flut').forEach(e => e.remove());
+  document.querySelectorAll('.tbl-wrap').forEach(wrap => {
+    wrap.classList.remove('cabfixo'); wrap.onscroll = null;
+    const tb = wrap.querySelector('table');
+    if (!tb || !tb.tHead || !tb.tBodies[0] || tb.tBodies[0].rows.length < MIN_LINHAS_CAB) return;
+    if (tb.offsetWidth <= wrap.clientWidth + 1) { wrap.classList.add('cabfixo'); return; } // cabe na tela: sticky puro
+    // tabela larga (rola para o lado): cópia do cabeçalho presa à tela
+    const box = document.createElement('div'); box.className = 'cab-flut'; box.hidden = true; box.setAttribute('aria-hidden', 'true');
+    const inner = document.createElement('table'); inner.className = tb.className; inner.appendChild(tb.tHead.cloneNode(true)); box.appendChild(inner);
+    // clique na cópia vale como clique no cabeçalho de verdade (colunas ordenáveis)
+    box.addEventListener('click', e => {
+      const th = e.target.closest('th'); if (!th) return;
+      const o = tb.tHead.rows[0].cells[Array.prototype.indexOf.call(th.parentNode.children, th)]; if (o) o.click();
+    });
+    wrap.before(box);
+    wrap.onscroll = posicionaCabecalhos;
+    cabFlut.push({ wrap, tb, box, inner });
+  });
+  posicionaCabecalhos();
+}
+function posicionaCabecalhos() {
+  if (!cabFlut.length) return;
+  const topo = topoFixo();
+  cabFlut.forEach(({ wrap, tb, box, inner }) => {
+    const r = wrap.getBoundingClientRect(), hh = tb.tHead.offsetHeight;
+    const mostra = tb.tHead.getBoundingClientRect().top < topo && r.bottom > topo + hh;
+    box.hidden = !mostra; if (!mostra) return;
+    box.style.top = topo + 'px'; box.style.left = (r.left + wrap.clientLeft) + 'px'; box.style.width = wrap.clientWidth + 'px'; box.style.height = hh + 'px';
+    inner.style.width = tb.offsetWidth + 'px';
+    const o = tb.tHead.rows[0].cells, c = inner.tHead.rows[0].cells;
+    for (let i = 0; i < o.length && i < c.length; i++) c[i].style.width = o[i].getBoundingClientRect().width + 'px';
+    box.scrollLeft = wrap.scrollLeft;
+  });
+}
+let cabTimer;
+window.addEventListener('scroll', () => { if (cabFlut.length) requestAnimationFrame(posicionaCabecalhos); }, { passive: true });
+window.addEventListener('resize', () => { clearTimeout(cabTimer); cabTimer = setTimeout(montaCabecalhos, 120); });
+window.addEventListener('orientationchange', () => { clearTimeout(cabTimer); cabTimer = setTimeout(montaCabecalhos, 250); });
+document.addEventListener('toggle', () => { clearTimeout(cabTimer); cabTimer = setTimeout(montaCabecalhos, 0); }, true); // <details> aberto muda as larguras
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(montaCabecalhos);
+
 // medição de visitas: o Umami ignora o "#", então cada troca de tela do app é avisada a ele à mão (sem Umami na página, não faz nada)
 function medeTela() {
   try { if (window.umami && typeof umami.track === 'function') umami.track(p => ({ ...p, url: location.pathname + location.hash, title: document.title })); } catch (e) { /* medição nunca pode quebrar o site */ }
