@@ -652,6 +652,30 @@ function bindTemporada(ano) {
 
 /* artilheiros */
 let artSel = 'geral', artTab = 'gols';
+let assSel = 'geral', assClube = 'todos';
+async function painelAssistencias() {
+  let d;
+  try { d = await api('assistentes.json'); }
+  catch (e) { return `<div class="notice"><b>Assistências indisponíveis</b><p>Os dados de assistências não foram carregados. Tente de novo mais tarde.</p></div>`; }
+  const clubes = Object.keys(d.porClube).sort((x, y) => nome(x).localeCompare(nome(y)));
+  const anos = Object.keys(d.porTemporada);
+  const porClube = assClube !== 'todos' && d.porClube[assClube];
+  const lista = porClube ? d.porClube[assClube] : assSel === 'geral' ? d.geral : (d.porTemporada[assSel] || []);
+  const mostraJogos = porClube || assSel === 'geral';
+  const optAno = `<option value="geral"${assSel === 'geral' ? ' selected' : ''}>Todas (${d.de}–${d.ate})</option>` + anos.slice().reverse().map(y => `<option value="${y}"${assSel === y ? ' selected' : ''}>${y}</option>`).join('');
+  const optClube = `<option value="todos">Todos os clubes</option>` + clubes.map(c => `<option value="${c}"${assClube === c ? ' selected' : ''}>${esc(nome(c))}</option>`).join('');
+  const linhas = lista.map((x, i) => {
+    const nomeJ = x.slug && JOG.porSlug[x.slug] ? `<a class="jog" href="#jogador-${x.slug}">${esc(x.n)}</a>` : esc(x.n);
+    const cl = x.clubes.slice(0, 4).map(c => `<a class="team" href="#time-${c}" title="${esc(nome(c))}">${crest(c)}</a>`).join('');
+    return `<tr><td class="pos">${i + 1}</td><td class="l quebra">${nomeJ}</td><td class="l"><div class="clubs compacto">${cl}</div></td><td class="pts">${x.a}</td>${mostraJogos ? `<td class="m-oculta">${x.j}</td>` : ''}</tr>`;
+  }).join('');
+  const pct = d.golsTotal ? (100 * d.golsComAssistencia / d.golsTotal).toFixed(0) : 0;
+  const titulo = porClube ? 'Assistências pelo ' + nome(assClube) : assSel === 'geral' ? 'Os maiores garçons' : 'Assistências ' + assSel;
+  return `<div class="controls"><label for="assano">Período<select id="assano"${porClube ? ' disabled' : ''}>${optAno}</select></label>
+      <label for="assclube">Clube<select id="assclube">${optClube}</select></label></div>
+    ${sec(titulo, `<div class="tbl-wrap"><table class="fixa"><thead><tr><th class="pos">#</th><th class="l">Jogador</th><th class="l">Clubes</th><th>Assist.</th>${mostraJogos ? '<th class="m-oculta">Jogos</th>' : ''}</tr></thead><tbody>${linhas}</tbody></table></div>`, '',
+      `Assistências segundo a ESPN, de ${d.de} a ${d.ate} (${d.jogos.toLocaleString('pt-BR')} jogos). A ESPN registra o passe em ${pct}% dos gols (${d.golsComAssistencia.toLocaleString('pt-BR')} de ${d.golsTotal.toLocaleString('pt-BR')}, sem contar gols contra), então os números podem ser um pouco menores que os de outras fontes. Antes de ${d.de} não há dado confiável.`)}`;
+}
 async function vArtilheiros() {
   const a = await api('artilheiros.json');
   const anos = Object.keys(a.porTemporada);
@@ -660,9 +684,7 @@ async function vArtilheiros() {
   const tabs = `<div class="tabs" role="group"><button type="button" data-tab="gols" aria-pressed="${artTab === 'gols'}">Gols</button><button type="button" data-tab="assist" aria-pressed="${artTab === 'assist'}">Assistências</button></div>`;
   let corpo;
   if (artTab === 'assist') {
-    corpo = `<div class="notice"><b>Assistências ainda não incluídas</b>
-      <p>A base de dados usada no site registra quem fez cada gol, mas não quem deu o passe. Para o Brasileirão, registros confiáveis de assistências só existem a partir de meados da década de 2010, em provedores de estatística como Sofascore, FBref e Opta.</p>
-      <p>O próximo passo é importar essas fontes e montar a tabela de garçons. Os anos sem dado confiável vão aparecer como sem registro, para não misturar números de origens diferentes.</p></div>`;
+    corpo = await painelAssistencias();
   } else {
     const hats = a.hatTricks.filter(h => artSel === 'geral' || String(h.temp) === artSel);
     const parcial = artSel !== 'geral' && a.parciais.includes(+artSel);
@@ -687,6 +709,8 @@ async function vArtilheiros() {
 }
 function bindArtilheiros() {
   document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { artTab = b.dataset.tab; render(); });
+  const sa = document.getElementById('assano'); if (sa) sa.onchange = e => { assSel = e.target.value; render(); };
+  const sc = document.getElementById('assclube'); if (sc) sc.onchange = e => { assClube = e.target.value; render(); };
   const s = document.getElementById('artano'); if (s) s.onchange = e => { artSel = e.target.value; render(); };
   const b = document.getElementById('buscajog'); if (b) b.oninput = e => { const j = JOG.porNome[e.target.value]; if (j) location.hash = 'jogador-' + j.slug; };
 }
@@ -697,8 +721,9 @@ const jogLink = (atleta, txt) => { const j = JOG.porNome[atleta]; const t = txt 
 async function vJogador(slug) {
   const ix = JOG.porSlug[slug]; if (!ix) throw new Error('Jogador não encontrado.');
   const letra = /^[a-z]/.test(slug) ? slug[0] : '0';
-  const [arq, ps] = await Promise.all([api(`jogadores/${letra}.json`), partidas()]);
+  const [arq, ps, cam] = await Promise.all([api(`jogadores/${letra}.json`), partidas(), api(`camisas/${letra}.json`).catch(() => null)]);
   const j = arq.find(x => x.slug === slug); if (!j) throw new Error('Jogador não encontrado.');
+  const esp = cam && cam[slug];   // jogos por camisa e assistências (ESPN, 2014 em diante); some se o arquivo não existir
   const porId = partidas._porId || (partidas._porId = Object.fromEntries(ps.map(p => [p.id, p])));
   const pos = JOG.lista.findIndex(x => x.gols === j.gols) + 1;   // empatados dividem a posição
   const anos = j.porTemporada, de = anos[0].ano, ate = anos[anos.length - 1].ano;
@@ -712,12 +737,15 @@ async function vJogador(slug) {
   const blocos = Object.keys(porAno).sort((a, b) => b - a).map((a, i) => `<details class="temp-gols"${i === 0 ? ' open' : ''}><summary><b>${a}</b> <span class="note">${porAno[a].length} gol${porAno[a].length > 1 ? 's' : ''} · ${[...new Set(porAno[a].map(g => nome(g.clube)))].join(', ')}</span></summary>
     <div class="tbl-wrap"><table class="compacta"><thead><tr><th class="l">Data</th><th class="l">Jogo</th><th>Min.</th></tr></thead><tbody>${porAno[a].map(g => `<tr>${linhaJogo(g.p, g.clube, `<td>${esc(g.min)}'${g.tipo === 'p' ? ' <span class="note" title="Pênalti">(pên.)</span>' : ''}</td>`)}</tr>`).join('')}</tbody></table></div></details>`).join('');
   const hats = j.maisGols.filter(g => g.gols >= 3).length;
+  const camisasSec = esp && esp.clubes.length ? sec('Camisas e assistências', `<div class="tbl-wrap"><table><thead><tr><th class="l">Clube</th><th>Jogos</th><th>Assist.</th><th class="l">Camisa (jogos)</th></tr></thead><tbody>${esp.clubes.map(c => `<tr><td class="l">${team(c.slug)}<div class="note">${c.de === c.ate ? c.de : c.de + '–' + c.ate}</div></td><td>${c.jogos}</td><td>${c.assist}</td><td class="l quebra">${c.camisas.length ? c.camisas.map(m => `<b>${m.n}</b> (${m.jogos})`).join(' · ') : '–'}</td></tr>`).join('')}</tbody></table></div>`, '',
+    `Jogos em que entrou em campo, de 2014 em diante, segundo a ESPN. Assistências são as que a ESPN registrou. Veja o <a href="#artilheiros" onclick="artTab='assist'">ranking de assistências</a>.`) : '';
   return `<div class="hero"><span class="eyebrow">Jogador · ${pos}º na artilharia geral</span><h1>${esc(j.atleta)}</h1>
     <p class="lede">${j.gols} gols na Nova Era, entre ${de} e ${ate}, por ${j.porClube.length} clube${j.porClube.length > 1 ? 's' : ''}. Melhor temporada: ${melhor.ano}, com ${melhor.gols} gols.</p>
     <div class="hero-stats"><div>${numAnim(j.gols)}<span>gols</span></div><div>${numAnim(j.penaltis)}<span>de pênalti</span></div>
-    <div>${numAnim(j.temporadas)}<span>temporadas com gol</span></div><div>${numAnim(hats)}<span>hat-tricks</span></div></div></div>
+    <div>${numAnim(j.temporadas)}<span>temporadas com gol</span></div><div>${numAnim(hats)}<span>hat-tricks</span></div>${esp ? `<div>${numAnim(esp.assist)}<span>assistências desde 2014</span></div>` : ''}</div></div>
   <div class="grid2">${sec('Gols por temporada', barras, '', 'Em dourado, a temporada com mais gols.')}${sec('Por clube', clubes)}</div>
   <div class="grid2">${sec('Jogos com mais gols', mais)}${sec('Todos os gols', blocos, '', 'Gols contra não entram. Toque no ano para abrir.')}</div>
+  ${camisasSec}
   <p class="note">Jogadores com o mesmo nome são separados pelo clube e pela época; se encontrar algum gol de outra pessoa aqui, ele pode ser corrigido em <code>dados/atletas.csv</code>.</p>`;
 }
 
