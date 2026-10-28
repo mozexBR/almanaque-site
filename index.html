@@ -665,7 +665,8 @@ async function painelAssistencias() {
   const optAno = `<option value="geral"${assSel === 'geral' ? ' selected' : ''}>Todas (${d.de}–${d.ate})</option>` + anos.slice().reverse().map(y => `<option value="${y}"${assSel === y ? ' selected' : ''}>${y}</option>`).join('');
   const optClube = `<option value="todos">Todos os clubes</option>` + clubes.map(c => `<option value="${c}"${assClube === c ? ' selected' : ''}>${esc(nome(c))}</option>`).join('');
   const linhas = lista.map((x, i) => {
-    const nomeJ = x.slug && JOG.porSlug[x.slug] ? `<a class="jog" href="#jogador-${x.slug}">${esc(x.n)}</a>` : esc(x.n);
+    const j = x.slug && JOG.porSlug[x.slug];   // com página no site, usa o apelido do site em vez do nome da ESPN
+    const nomeJ = j ? `<a class="jog" href="#jogador-${x.slug}">${esc(j.atleta)}</a>` : esc(x.n);
     const cl = x.clubes.slice(0, 4).map(c => `<a class="team" href="#time-${c}" title="${esc(nome(c))}">${crest(c)}</a>`).join('');
     return `<tr><td class="pos">${i + 1}</td><td class="l quebra">${nomeJ}</td><td class="l"><div class="clubs compacto">${cl}</div></td><td class="pts">${x.a}</td>${mostraJogos ? `<td class="m-oculta">${x.j}</td>` : ''}</tr>`;
   }).join('');
@@ -911,7 +912,7 @@ console.log(time.confrontos[0]);      // retrospecto contra o adversário mais e
     <p>Todos os jogos da Série A de ${A0} a ${A1}, com o autor e o minuto de cada gol. De 2014 em diante, do Brasileirao_Dataset; de 2003 a 2013, garimpados no RSSSF Brasil, nas súmulas da CBF (2010 a 2013) e no futibola.com.br (2009 inteiro e jogos que faltavam), conferidos com a artilharia da Wikipédia. A temporada em andamento vem do futibola.com.br, com os jogos já encerrados (atualizada com <code>scripts/importar-futibola.ps1</code>).</p>
     <p>Escudos: imagens da Wikipédia, em <code>escudos/{slug}.png</code>. Os escudos são marcas dos próprios clubes.</p>
     <p>A classificação é recalculada a partir dos placares e aplica as punições do STJD de 2013 (Portuguesa e Flamengo, −4 pontos cada). Os 22 campeões e os rebaixados de cada ano batem com o histórico oficial.</p>
-    <p>Assistências não fazem parte da base atual. Os jogadores aparecem pelo apelido; quando dois jogadores têm o mesmo nome, o site os separa pelo clube e pela época (ex.: “Robinho (Coritiba)”). Essa separação foi conferida à mão nos 100 maiores artilheiros; mais abaixo no ranking ainda pode haver homônimos juntados ou o mesmo jogador dividido.</p></div>`)}`;
+    <p>Assistências e camisas: de 2014 em diante, segundo a ESPN, que registra o passe em cerca de dois terços dos gols; antes de 2014 não há dado confiável. Os jogadores aparecem pelo apelido; quando dois jogadores têm o mesmo nome, o site os separa pelo clube e pela época (ex.: “Robinho (Coritiba)”). Essa separação foi conferida à mão nos 100 maiores artilheiros; mais abaixo no ranking ainda pode haver homônimos juntados ou o mesmo jogador dividido.</p></div>`)}`;
 }
 
 /* ---------- roteamento ---------- */
