@@ -753,7 +753,7 @@ async function vJogador(slug) {
   const hats = j.maisGols.filter(g => g.gols >= 3).length;
   const camisasSec = esp && esp.clubes.length ? sec('Camisas e assistências', `<div class="cam-grid">${esp.clubes.map(c => `<div class="cam-card">
       <div class="cam-top">${team(c.slug)}<span class="note">${c.de === c.ate ? c.de : c.de + '–' + c.ate}</span></div>
-      <div class="cam-nums"><span><b>${c.jogos}</b>jogos</span><span><b>${c.assist}</b>assist.</span></div>
+      <div class="cam-nums"><span><b>${c.jogos}</b>jogos</span>${c.ate >= 2014 ? `<span><b>${c.assist}</b>assist.</span>` : ''}</div>
       ${c.camisas.length ? `<div class="cam-camisas">${c.camisas.map((m, i) => `<div class="cam-camisa${i === 0 ? ' main' : ''}" title="Camisa ${m.n}: ${m.jogos} jogo${m.jogos > 1 ? 's' : ''}"><b>${m.n}</b><span>${m.jogos} jogo${m.jogos > 1 ? 's' : ''}</span></div>`).join('')}</div>` : ''}</div>`).join('')}</div>`, '',
     `Jogos em que entrou em campo: 2013 pelas súmulas da CBF e de 2014 em diante pela ESPN. Assistências são as que a ESPN registrou (de 2014 em diante). Veja o <a href="#artilheiros" onclick="artTab='assist'">ranking de assistências</a>.`) : '';
   return `<div class="hero"><span class="eyebrow">Jogador · ${pos}º na artilharia geral</span><h1>${esc(j.atleta)}</h1>
