@@ -15,7 +15,8 @@
 <link rel="icon" href="favicon.png">
 <link rel="canonical" href="https://almanaquenovaera.com.br/">
 <meta name="google-site-verification" content="GynsbCm-qM2LQlhCGllSbxhvi6EPZ-xqwKwVFXvtcB0" />
-<script defer src="https://cloud.umami.is/script.js" data-website-id="2b651160-fd9f-420e-ba2b-c4c606723619"></script><title>Almanaque da Nova Era</title>
+<script defer src="https://cloud.umami.is/script.js" data-website-id="2b651160-fd9f-420e-ba2b-c4c606723619"></script>
+<title>Almanaque da Nova Era</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -754,7 +755,7 @@ async function vJogador(slug) {
       <div class="cam-top">${team(c.slug)}<span class="note">${c.de === c.ate ? c.de : c.de + '–' + c.ate}</span></div>
       <div class="cam-nums"><span><b>${c.jogos}</b>jogos</span><span><b>${c.assist}</b>assist.</span></div>
       ${c.camisas.length ? `<div class="cam-camisas">${c.camisas.map((m, i) => `<div class="cam-camisa${i === 0 ? ' main' : ''}" title="Camisa ${m.n}: ${m.jogos} jogo${m.jogos > 1 ? 's' : ''}"><b>${m.n}</b><span>${m.jogos} jogo${m.jogos > 1 ? 's' : ''}</span></div>`).join('')}</div>` : ''}</div>`).join('')}</div>`, '',
-    `Jogos em que entrou em campo, de 2014 em diante, segundo a ESPN. Assistências são as que a ESPN registrou. Veja o <a href="#artilheiros" onclick="artTab='assist'">ranking de assistências</a>.`) : '';
+    `Jogos em que entrou em campo: 2013 pelas súmulas da CBF e de 2014 em diante pela ESPN. Assistências são as que a ESPN registrou (de 2014 em diante). Veja o <a href="#artilheiros" onclick="artTab='assist'">ranking de assistências</a>.`) : '';
   return `<div class="hero"><span class="eyebrow">Jogador · ${pos}º na artilharia geral</span><h1>${esc(j.atleta)}</h1>
     <p class="lede">${j.gols} gols na Nova Era, entre ${de} e ${ate}, por ${j.porClube.length} clube${j.porClube.length > 1 ? 's' : ''}. Melhor temporada: ${melhor.ano}, com ${melhor.gols} gols.</p>
     <div class="hero-stats"><div>${numAnim(j.gols)}<span>gols</span></div><div>${numAnim(j.penaltis)}<span>de pênalti</span></div>
@@ -927,7 +928,7 @@ console.log(time.confrontos[0]);      // retrospecto contra o adversário mais e
     <p>Todos os jogos da Série A de ${A0} a ${A1}, com o autor e o minuto de cada gol. De 2014 em diante, do Brasileirao_Dataset; de 2003 a 2013, garimpados no RSSSF Brasil, nas súmulas da CBF (2010 a 2013) e no futibola.com.br (2009 inteiro e jogos que faltavam), conferidos com a artilharia da Wikipédia. A temporada em andamento vem do futibola.com.br, com os jogos já encerrados (atualizada com <code>scripts/importar-futibola.ps1</code>).</p>
     <p>Escudos: imagens da Wikipédia, em <code>escudos/{slug}.png</code>. Os escudos são marcas dos próprios clubes.</p>
     <p>A classificação é recalculada a partir dos placares e aplica as punições do STJD de 2013 (Portuguesa e Flamengo, −4 pontos cada). Os 22 campeões e os rebaixados de cada ano batem com o histórico oficial.</p>
-    <p>Assistências e camisas: de 2014 em diante, segundo a ESPN, que registra o passe em cerca de dois terços dos gols; antes de 2014 não há dado confiável. Os jogadores aparecem pelo apelido; quando dois jogadores têm o mesmo nome, o site os separa pelo clube e pela época (ex.: “Robinho (Coritiba)”). Essa separação foi conferida à mão nos 100 maiores artilheiros; mais abaixo no ranking ainda pode haver homônimos juntados ou o mesmo jogador dividido.</p></div>`)}`;
+    <p>Assistências: de 2014 em diante, segundo a ESPN, que registra o passe em cerca de dois terços dos gols; antes de 2014 não há dado confiável. Camisas e jogos em campo: 2013 vem das súmulas da CBF e 2014 em diante da ESPN; antes de 2013 ainda não há dado confiável. Os jogadores aparecem pelo apelido; quando dois jogadores têm o mesmo nome, o site os separa pelo clube e pela época (ex.: “Robinho (Coritiba)”). Essa separação foi conferida à mão nos 100 maiores artilheiros; mais abaixo no ranking ainda pode haver homônimos juntados ou o mesmo jogador dividido.</p></div>`)}`;
 }
 
 /* ---------- roteamento ---------- */
