@@ -480,6 +480,8 @@ function animaNumeros() {
 }
 const numAnim = (v, dec = 0) => `<b data-num="${v}" data-dec="${dec}">${Number(v).toLocaleString('pt-BR', { minimumFractionDigits: dec, maximumFractionDigits: dec })}</b>`;
 
+// jogos em ordem de acontecimento: data e horário (sem horário marcado, no fim do dia)
+const porHorario = js => [...js].sort((a, b) => (a.data + (a.hora || '99:99')).localeCompare(b.data + (b.hora || '99:99')));
 // cartão de um jogo da próxima rodada; max = quantas curiosidades mostrar
 function cartaoJogo(j, max = 4) {
   const h = j.h2h, w = n => (100 * n / h.J) + '%';
@@ -502,12 +504,13 @@ async function vRodada(n) {
   const r = n ? rs.find(x => x.rodada === n) : rs[0];
   if (!r) throw new Error('Rodada não encontrada.');
   const cls = r.jogos.filter(j => j.classico).length;
+  const jogosOrd = porHorario(r.jogos);
   const tabs = `<nav class="rodada-tabs" aria-label="Rodadas">${rs.map(x => `<a href="#rodada-${x.rodada}"${x === r ? ' aria-current="page"' : ''}>${x.rodada}ª</a>`).join('')}</nav>`;
   const periodo = r.de === r.ate ? fmtDia(r.de) : `${fmtDia(r.de)} a ${fmtDia(r.ate)}`;
   return `<div class="hero"><span class="eyebrow">Brasileirão ${r.ano} · ${r === rs[0] ? 'próxima rodada' : 'rodadas seguintes'}</span>
     <h1>${r.rodada}ª rodada${cls ? ` <em>· ${cls} ${cls > 1 ? 'clássicos' : 'clássico'}</em>` : ''}</h1>
-    <p class="lede">${periodo}. O retrospecto de cada jogo na Nova Era e as curiosidades que mais chamam atenção, com os clássicos primeiro.</p>${tabs}</div>
-  <div class="mgrid">${r.jogos.map(j => cartaoJogo(j, j.classico ? 5 : 4)).join('')}</div>
+    <p class="lede">${periodo}. O retrospecto de cada jogo na Nova Era e as curiosidades que mais chamam atenção, em ordem de data e horário, com os clássicos destacados.</p>${tabs}</div>
+  <div class="mgrid">${jogosOrd.map(j => cartaoJogo(j, j.classico ? 5 : 4)).join('')}</div>
   <p class="note">Datas e horários da ESPN (os jogos ainda sem horário marcado aparecem com a data prevista do futibola.com.br), sujeitos a mudança. Posição, pontos e últimos 5 resultados (V, E, D) no Brasileirão ${r.ano}.</p>`;
 }
 
@@ -577,7 +580,7 @@ async function vInicio() {
       <div>${numAnim(t.jogos)}<span>jogos</span></div><div>${numAnim(t.gols)}<span>gols</span></div>
       <div>${numAnim(t.gols / t.jogos, 2)}<span>gols por jogo</span></div><div>${numAnim(t.times)}<span>clubes</span></div>
       <div>${numAnim(ranking.length)}<span>campeões diferentes</span></div></div></div>
-  ${prox ? sec(`Próxima rodada · ${prox.rodada}ª`, `<div class="mgrid">${prox.jogos.slice(0, 3).map(j => cartaoJogo(j, 3)).join('')}</div>`, `<a href="#rodada" class="note">Ver os ${prox.jogos.length} jogos</a>`) : ''}
+  ${prox ? sec(`Próxima rodada · ${prox.rodada}ª`, `<div class="mgrid">${porHorario(prox.jogos).slice(0, 3).map(j => cartaoJogo(j, 3)).join('')}</div>`, `<a href="#rodada" class="note">Ver os ${prox.jogos.length} jogos</a>`) : ''}
   ${sec('Campeões', `<div class="champs">${champs}</div>`, `<span class="note">${ranking.map(([s, n]) => `${esc(nome(s))} ${n}`).join(' · ')}</span>`)}
   <div class="grid2">
     ${sec('Média de gols por jogo', barChart(media, { fmt: v => String(v).replace('.', ','), h: 170, W: 480 }), '', '2003 a 2005 tiveram 24, 24 e 22 clubes. A partir de 2006, 20 clubes e 380 jogos por temporada.')}
